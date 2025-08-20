@@ -77,7 +77,8 @@ def handle_submission(name, state, region, language, category, text, audio):
     # 4. Save to CSV
     try:
         df = pd.DataFrame([submission])
-        write_header = not CSV_PATH.exists()
+        # THE FIX: Check if file doesn't exist OR is empty before writing header
+        write_header = not CSV_PATH.exists() or CSV_PATH.stat().st_size == 0
         df.to_csv(CSV_PATH, mode="a", header=write_header, index=False, encoding="utf-8")
         
         # 5. Update session state on success and rerun
@@ -95,7 +96,6 @@ if "state_select" not in st.session_state:
     st.session_state.state_select = STATE_PLACEHOLDER
 if "region_select" not in st.session_state:
     st.session_state.region_select = REGION_PLACEHOLDER
-# ADDED: Session state for the name input
 if "name_input" not in st.session_state:
     st.session_state.name_input = ""
 
@@ -110,15 +110,12 @@ if st.session_state.form_submitted:
         st.session_state.form_submitted = False
         st.session_state.state_select = STATE_PLACEHOLDER
         st.session_state.region_select = REGION_PLACEHOLDER
-        # ADDED: Reset the name field for the next submission
         st.session_state.name_input = ""
         st.rerun()
 else:
     # --- STEP 1: SHARE YOUR DETAILS (OUTSIDE THE FORM) ---
-    # CHANGED: Updated the subheader text
     st.subheader("Step 1: Share Your Details")
     
-    # MOVED: The name input is now here, outside the form
     st.text_input("Your Name*", key="name_input")
     
     available_states = sorted(list(state_regions.keys()))
@@ -150,11 +147,9 @@ else:
     st.divider()
 
     # --- STEP 2: LORE SUBMISSION (INSIDE THE FORM) ---
-    # CHANGED: The form will only appear after all details in Step 1 are filled
     if st.session_state.name_input.strip() and selected_state != STATE_PLACEHOLDER and selected_region != REGION_PLACEHOLDER:
         st.subheader("Step 2: Share Your Lore")
         with st.form("lore_form"):
-            # REMOVED: Name input is no longer in the form
             language = st.selectbox("Language", ["Telugu", "Hindi", "Tamil", "Marathi", "Odia", "Other"])
             category = st.radio("Type of Entry", ["Folk Story", "Proverb", "Local History"])
             text = st.text_area("Write your lore here", height=200, placeholder="Start writing your story or proverb...")
@@ -163,8 +158,6 @@ else:
             submit_button = st.form_submit_button("Submit Lore")
 
         if submit_button:
-            # CHANGED: Pass the name from session_state into the handler
             handle_submission(st.session_state.name_input, selected_state, selected_region, language, category, text, audio)
     else:
-        # CHANGED: Updated the prompt text
         st.info("Please enter your name and select a state and region to proceed.")
