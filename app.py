@@ -1,37 +1,37 @@
-# app.py
+
 import streamlit as st
 import pandas as pd
 from datetime import datetime
 from langdetect import detect
 from pathlib import Path
 
-# Import the dictionary containing state and region data
+
 from states_data import state_regions
 
-# --- CONFIGURATION & CONSTANTS ---
+
 st.set_page_config(page_title="Local Lore Collector", layout="centered")
 
 CSV_PATH = Path("submissions.csv")
 UPLOAD_DIR = Path("uploads")
 
-# Placeholders for select boxes
+
 STATE_PLACEHOLDER = "Select State"
 REGION_PLACEHOLDER = "Select Region"
 
-# Ensure the upload directory exists
+
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 
-# --- CALLBACK FUNCTION ---
+
 def on_state_change():
     """Resets the region selection when the state changes."""
     st.session_state.region_select = REGION_PLACEHOLDER
 
 
-# --- HELPER FUNCTION ---
+
 def handle_submission(name, state, region, language, category, text, audio):
     """Processes and saves a single form submission."""
-    # 1. Validate inputs
+    
     if not name.strip():
         st.warning("Please enter your name. This field is required.")
         return
@@ -40,7 +40,7 @@ def handle_submission(name, state, region, language, category, text, audio):
         st.warning("Please enter the text for your lore before submitting.")
         return
 
-    # 2. Process data and files
+    
     timestamp = datetime.now().isoformat()
     audio_saved_path = ""
     detected_lang = "unknown"
@@ -61,7 +61,7 @@ def handle_submission(name, state, region, language, category, text, audio):
             st.error(f"Failed to save uploaded audio: {e}")
             audio_saved_path = ""
 
-    # 3. Structure data for saving
+    
     submission = {
         "timestamp": timestamp,
         "name": name,
@@ -74,14 +74,14 @@ def handle_submission(name, state, region, language, category, text, audio):
         "audio_path": str(audio_saved_path),
     }
 
-    # 4. Save to CSV
+    
     try:
         df = pd.DataFrame([submission])
-        # THE FIX: Check if file doesn't exist OR is empty before writing header
+       
         write_header = not CSV_PATH.exists() or CSV_PATH.stat().st_size == 0
         df.to_csv(CSV_PATH, mode="a", header=write_header, index=False, encoding="utf-8")
         
-        # 5. Update session state on success and rerun
+        
         st.session_state.form_submitted = True
         st.rerun()
 
@@ -89,7 +89,7 @@ def handle_submission(name, state, region, language, category, text, audio):
         st.error(f"Failed to save submission to CSV: {e}")
 
 
-# --- INITIALIZE SESSION STATE ---
+
 if "form_submitted" not in st.session_state:
     st.session_state.form_submitted = False
 if "state_select" not in st.session_state:
@@ -99,11 +99,11 @@ if "region_select" not in st.session_state:
 if "name_input" not in st.session_state:
     st.session_state.name_input = ""
 
-# --- UI RENDERING ---
+
 st.title("🪔 Local Lore Collector")
 st.markdown("Preserve your region's stories, proverbs, and history.")
 
-# Display success message and "Submit Another" button
+
 if st.session_state.form_submitted:
     st.success("🎉 Your submission was recorded. Thank you for contributing!")
     if st.button("➕ Submit Another Entry"):
@@ -113,7 +113,7 @@ if st.session_state.form_submitted:
         st.session_state.name_input = ""
         st.rerun()
 else:
-    # --- STEP 1: SHARE YOUR DETAILS (OUTSIDE THE FORM) ---
+    
     st.subheader("Step 1: Share Your Details")
     
     st.text_input("Your Name*", key="name_input")
@@ -146,7 +146,7 @@ else:
 
     st.divider()
 
-    # --- STEP 2: LORE SUBMISSION (INSIDE THE FORM) ---
+    
     if st.session_state.name_input.strip() and selected_state != STATE_PLACEHOLDER and selected_region != REGION_PLACEHOLDER:
         st.subheader("Step 2: Share Your Lore")
         with st.form("lore_form"):
